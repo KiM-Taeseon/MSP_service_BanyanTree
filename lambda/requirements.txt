@@ -1,0 +1,5 @@
+## Requirements for Lambda Function
+
+
+# lambda/requirements.txt
+boto3==1.26.135
