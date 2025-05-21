@@ -1,4 +1,5 @@
 {
+  "id": "jsjsjs",
   "ec2": 2,
   "ec2type": "t2.micro",
   "s3": 1,
