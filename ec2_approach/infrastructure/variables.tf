@@ -2,7 +2,7 @@
 variable "aws_region" {
   description = "AWS region for all resources"
   type        = string
-  default     = "us-east-1"
+  default     = "ap_northeast-2"
 }
 
 variable "state_bucket_name" {
@@ -24,7 +24,7 @@ variable "lock_table_name" {
 variable "ami_id" {
   description = "AMI ID for the EC2 instance"
   type        = string
-  default     = "ami-0c55b159cbfafe1f0" # Amazon Linux 2 AMI (adjust for your region)
+  default     = "ami-0f61efb6cfbcc18a4" # Amazon Linux 2 AMI (HVM) - adjust for your region
 }
 
 variable "instance_type" {
@@ -36,6 +36,7 @@ variable "instance_type" {
 variable "key_name" {
   description = "Key pair name for SSH access to the EC2 instance"
   type        = string
+  default     = "terraform_runner_key"
 }
 
 variable "ssh_allowed_cidr" {
