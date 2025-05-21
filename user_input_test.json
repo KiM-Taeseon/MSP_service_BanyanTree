@@ -1,0 +1,12 @@
+{
+  "ec2": 105,
+  "ec2type": "t3.medium",
+  "s3": 10,
+  "rds": 10,
+  "top3_region": [
+    "ap-northeast-1",
+    "us-west-2",
+    "eu-central-1"
+  ]
+}
+

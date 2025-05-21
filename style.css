@@ -1,0 +1,83 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+}
+
+.container {
+    width: 40%;
+    padding: 40px;
+    box-sizing: border-box;
+    border-right: 1px solid #ccc;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+input, select, button {
+    margin-top: 5px;
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+}
+
+button {
+    margin-top: 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.right-pane {
+    width: 60%;
+    padding: 20px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+#region-item {
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.region-item:hover {
+    background-color: #f0f0f0;
+}
+
+#diagramImage {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 50%;
+    max-height: 60%;
+    object-fit: contain;
+    border: 1px solid #ccc;
+    padding: 8px;
+    background: #fff;
+}
+
+#topRegions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#output {
+    margin-top: 30px;
+}
+
+#selectedRegionInputs {
+    display: none;
+    margin-top: 30px;
+}
+

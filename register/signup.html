@@ -1,0 +1,44 @@
+<!-- /var/www/html/register/signup.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>회원가입</title>
+    <style>
+        body { font-family: Arial; padding: 40px; }
+        input, button { margin-top: 10px; padding: 8px; width: 100%; }
+        .container { max-width: 400px; margin: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>회원가입</h2>
+        <form id="signupForm">
+            <input type="text" id="username" placeholder="아이디" required>
+            <input type="password" id="password" placeholder="비밀번호" required>
+            <button type="submit">가입하기</button>
+        </form>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        document.getElementById("signupForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value;
+
+            const res = await fetch("http://127.0.0.1:5001/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            });
+
+            const result = await res.json();
+            const msg = document.getElementById("message");
+            msg.innerText = result.message;
+            msg.style.color = result.status === "ok" ? "green" : "red";
+        });
+    </script>
+</body>
+</html>
+
