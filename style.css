@@ -1,3 +1,7 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: Arial, sans-serif;
     display: flex;
@@ -6,26 +10,32 @@ body {
     height: 100vh;
 }
 
+/* 좌측 입력 폼 */
 .container {
     width: 40%;
     padding: 40px;
-    box-sizing: border-box;
     border-right: 1px solid #ccc;
+    overflow-y: auto;
 }
 
+/* 입력 라벨 */
 label {
     display: block;
     margin-top: 15px;
     font-weight: bold;
 }
 
-input, select, button {
-    margin-top: 5px;
+/* input, select, button 공통 스타일 */
+input,
+select,
+button {
     width: 100%;
     padding: 8px;
     font-size: 16px;
+    margin-top: 5px;
 }
 
+/* 버튼 스타일 */
 button {
     margin-top: 20px;
     background-color: #007bff;
@@ -34,50 +44,59 @@ button {
     cursor: pointer;
 }
 
+button:hover {
+    background-color: #0056b3;
+}
+
+/* 우측 영역 */
 .right-pane {
     width: 60%;
     padding: 20px;
     position: relative;
-    box-sizing: border-box;
+    overflow: hidden;
 }
 
-#region-item {
+/* 상위 3개 리전 버튼 영역 */
+#topRegions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 16px;
+}
+
+/* 리전 버튼 스타일 */
+.region-item {
+    background-color: #f8f9fa;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    font-weight: bold;
     cursor: pointer;
-    padding: 5px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .region-item:hover {
-    background-color: #f0f0f0;
+    background-color: #e2e6ea;
+    transform: scale(1.02);
 }
 
+/* 리전 다이어그램 이미지 */
 #diagramImage {
     position: absolute;
     bottom: 20px;
     right: 20px;
-    width: 50%;
-    max-height: 60%;
+    width: 90%;
+    max-height: 80%;
     object-fit: contain;
     border: 1px solid #ccc;
-    padding: 8px;
+    padding: 10px;
     background: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-#topRegions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 18px;
-    font-weight: bold;
-}
-
+/* 출력 결과 */
 #output {
-    margin-top: 30px;
-}
-
-#selectedRegionInputs {
-    display: none;
     margin-top: 30px;
 }
 

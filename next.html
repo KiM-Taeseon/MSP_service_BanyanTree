@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>리전 세부 설정</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+        }
+
+        .side-info, .form-container, .diagram-pane {
+            padding: 30px;
+        }
+
+        .side-info {
+            width: 25%;
+            background: #ffffff;
+            border-right: 1px solid #ddd;
+        }
+
+        .form-container {
+            width: 40%;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        .diagram-pane {
+            width: 35%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f4f8;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .info-box {
+            margin-bottom: 15px;
+            padding: 12px;
+            background-color: #f0f4ff;
+            border-left: 4px solid #007bff;
+            border-radius: 6px;
+        }
+
+        button {
+            margin-top: 30px;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .diagram-pane img {
+            max-width: 90%;
+            max-height: 90%;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            background: #fff;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 좌측: 선택한 리소스 정보 -->
+<div class="side-info" id="selectedResources">
+    <h2>📦 입력 정보</h2>
+    <div class="info-box" id="regionBox">리전: -</div>
+    <div class="info-box" id="ec2Box">EC2: -</div>
+    <div class="info-box" id="typeBox">타입: -</div>
+    <div class="info-box" id="s3Box">S3: -</div>
+    <div class="info-box" id="rdsBox">RDS: -</div>
+</div>
+
+<!-- 중앙: 입력 폼 -->
+<div class="form-container">
+    <h2>GitHub 및 Access Key 입력</h2>
+
+    <label for="githubUrl">GitHub 주소</label>
+    <input type="url" id="githubUrl" placeholder="https://github.com/your/repo">
+
+    <label for="accessKey">AWS Access Key</label>
+    <input type="text" id="accessKey" placeholder="예: AKIA...">
+
+    <button id="submitConfig">생성 시작</button>
+</div>
+
+<!-- 우측: 리전 아키텍처 이미지 -->
+<div class="diagram-pane">
+    <img id="diagramImage" alt="아키텍처 이미지">
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+
+    const region = params.get("selectedRegion");
+    const ec2 = params.get("ec2");
+    const ec2type = params.get("ec2type");
+    const s3 = params.get("s3");
+    const rds = params.get("rds");
+
+    document.getElementById("regionBox").textContent = `리전: ${region ?? "-"}`;
+    document.getElementById("ec2Box").textContent = `EC2 인스턴스 수: ${ec2 ?? "-"}`;
+    document.getElementById("typeBox").textContent = `EC2 타입: ${ec2type ?? "-"}`;
+    document.getElementById("s3Box").textContent = `S3 버킷 수: ${s3 ?? "-"}`;
+    document.getElementById("rdsBox").textContent = `RDS 인스턴스 수: ${rds ?? "-"}`;
+
+    // 리전 아키텍처 이미지 로드
+    const img = document.getElementById("diagramImage");
+    if (region) {
+        img.src = `/diagrams/${region}.png`;
+        img.alt = `${region} 아키텍처 다이어그램`;
+    } else {
+        img.style.display = "none";
+    }
+
+    document.getElementById("submitConfig").addEventListener("click", async () => {
+        const githubUrl = document.getElementById("githubUrl").value.trim();
+        const accessKey = document.getElementById("accessKey").value.trim();
+
+        if (!githubUrl || !accessKey || !region) {
+            alert("모든 항목을 입력하세요.");
+            return;
+        }
+
+        try {
+            await fetch("/save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    selectedRegion: region,
+                    githubUrl,
+                    accessKey
+                })
+            });
+            alert("인프라 생성 중입니다.");
+        } catch (err) {
+            alert("생성 실패: " + err.message);
+        }
+    });
+</script>
+
+</body>
+</html>
+

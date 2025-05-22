@@ -8,8 +8,7 @@ document.getElementById("awsForm").addEventListener("submit", async function (ev
     const rds = parseInt(document.getElementById("rds").value);
 
     try {
-        const res = await fetch("https://s3.ap-northeast-2.amazonaws.com/www.jongseo22.com/pricing/aws_price_data.json");
-
+        const res = await fetch("http://www.jongseo22.com/aws_price_data.json");
         if (!res.ok) throw new Error(`HTTP 오류: ${res.status}`);
 
         const pricing = await res.json();
@@ -28,7 +27,7 @@ document.getElementById("awsForm").addEventListener("submit", async function (ev
         const top3_region = sorted.slice(0, 3).map(([region]) => region);
 
         const topRegionsDiv = document.getElementById("topRegions");
-        topRegionsDiv.innerHTML = "<h2>📍 Top 3 저렴한 리전</h2>";
+        topRegionsDiv.innerHTML = "<h2>Top 3 저렴한 리전</h2>";
 
         sorted.slice(0, 3).forEach(([region, price]) => {
             const div = document.createElement("div");
@@ -36,24 +35,45 @@ document.getElementById("awsForm").addEventListener("submit", async function (ev
             div.innerText = `${region} ($${price})`;
             div.dataset.region = region;
 
+            // 마우스 올릴 때 이미지 표시
             div.addEventListener("mouseenter", () => {
-                document.getElementById("diagramImage").src = `https://s3.ap-northeast-2.amazonaws.com/www.jongseo22.com/arch-${region}.png`;
+                const oldImg = document.getElementById("diagramImage");
+                if (oldImg) oldImg.remove();
+
+                const img = document.createElement("img");
+                img.id = "diagramImage";
+                img.src = `/diagrams/${region}.png?t=${Date.now()}`;
+                img.alt = "Architecture Diagram";
+                img.style.position = "absolute";
+                img.style.bottom = "20px";
+                img.style.right = "20px";
+                img.style.width = "50%";
+                img.style.maxHeight = "60%";
+                img.style.objectFit = "contain";
+                img.style.border = "1px solid #ccc";
+                img.style.padding = "8px";
+                img.style.background = "#fff";
+                document.querySelector(".right-pane").appendChild(img);
             });
 
             div.addEventListener("mouseleave", () => {
-                document.getElementById("diagramImage").src = "https://s3.ap-northeast-2.amazonaws.com/www.jongseo22.com/multi-az_web_architecture.png";
+                const img = document.getElementById("diagramImage");
+                if (img) img.remove();
             });
 
-            // ✅ 리전 클릭 시 입력창 보이기
+            // ✅ 클릭 시 region 정보만 next.html로 전달
             div.addEventListener("click", () => {
-                document.getElementById("regionInputSection").style.display = "block";
-                document.getElementById("selectedRegion").value = region;
+                const query = new URLSearchParams({
+                    region
+                }).toString();
+                window.location.href = `/next.html?${query}`;
             });
 
             topRegionsDiv.appendChild(div);
         });
 
-        let resultHTML = `<h2>📍 최저가 리전: ${cheapest[0]} ($${cheapest[1]})</h2>`;
+        // 결과 테이블 출력
+        let resultHTML = `<h2>최저가 리전: ${cheapest[0]} ($${cheapest[1]})</h2>`;
         resultHTML += `<table><thead><tr><th>리전</th><th>총 비용 ($)</th></tr></thead><tbody>`;
         for (const [region, price] of Object.entries(summary)) {
             resultHTML += `<tr><td>${region}</td><td>$${price}</td></tr>`;
@@ -61,45 +81,15 @@ document.getElementById("awsForm").addEventListener("submit", async function (ev
         resultHTML += '</tbody></table>';
         document.getElementById("output").innerHTML = resultHTML;
 
-        // ✅ 첫 번째 입력 저장 (비용 계산 기준)
+        // 백엔드 저장 요청 (선택 전까지만)
         await fetch("/save", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: userId, ec2, ec2type, s3, rds, top3_region })
+            body: JSON.stringify({ userId, ec2, ec2type, s3, rds, top3_region })
         });
 
     } catch (error) {
         document.getElementById("output").innerHTML = `<p style="color:red">❗ 오류: ${error.message}</p>`;
-    }
-});
-
-// ✅ 최종 입력 정보 저장 (선택한 리전 + 깃허브 URL + 액세스 키)
-document.getElementById("confirmSelection").addEventListener("click", async function () {
-    const userId = document.getElementById("userId").value.trim();
-    const selectedRegion = document.getElementById("selectedRegion").value;
-    const githubUrl = document.getElementById("githubUrl").value.trim();
-    const accessKey = document.getElementById("accessKey").value.trim();
-
-    if (!selectedRegion || !githubUrl || !accessKey) {
-        alert("모든 항목을 입력해야 합니다.");
-        return;
-    }
-
-    try {
-        await fetch("/save", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                id: userId,
-                selectedRegion,
-                githubUrl,
-                accessKey
-            })
-        });
-
-        alert("✅ 최종 정보가 저장되었습니다!");
-    } catch (err) {
-        alert("❌ 저장 실패: " + err.message);
     }
 });
 

@@ -18,7 +18,7 @@ def save_input():
     data = request.get_json()
     print("📥 입력값:", data)
 
-    user_id = data.get("id", "anonymous")  # ID 없으면 기본 anonymous
+    user_id = data.get("userId", "anonymous")  # ID 없으면 기본 anonymous
 
     # ✅ 한국시간(KST = UTC + 9)
     kst_time = datetime.utcnow() + timedelta(hours=9)
