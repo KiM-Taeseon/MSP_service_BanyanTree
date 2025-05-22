@@ -94,3 +94,38 @@ resource "aws_eip" "terraform_eip" {
     Name = "terraform-runner-eip"
   }
 }
+
+# Project Builder EC2 instance
+resource "aws_instance" "project_builder" {
+  ami                    = var.ami_id
+  instance_type          = "t3.small"
+  key_name               = var.key_name
+  subnet_id              = aws_subnet.terraform_subnet.id
+  vpc_security_group_ids = [aws_security_group.project_builder_sg.id]
+  iam_instance_profile   = aws_iam_instance_profile.project_builder_profile.name
+  
+  user_data = templatefile("${path.module}/project_builder_user_data.sh", {
+    config_bucket = aws_s3_bucket.terraform_configs.bucket
+    aws_region = var.aws_region
+  })
+  
+  root_block_device {
+    volume_size = 20
+    volume_type = "gp3"
+  }
+  
+  tags = {
+    Name = "project-builder"
+    Role = "terraform-project-generator"
+  }
+}
+
+# Elastic IP for the project builder instance
+resource "aws_eip" "project_builder_eip" {
+  instance = aws_instance.project_builder.id
+  domain   = "vpc"
+  
+  tags = {
+    Name = "project-builder-eip"
+  }
+}

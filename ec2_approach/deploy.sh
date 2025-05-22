@@ -1,16 +1,13 @@
-## Deployment Scripts
-
-### deploy.sh
 #!/bin/bash
 
-# Script to deploy the Terraform Runner infrastructure
+# Script to deploy the Single-User Terraform Runner infrastructure
 
 set -e
 
 # Variables
 STATE_BUCKET="terraform-state-runner-$(aws sts get-caller-identity --query Account --output text)"
 CONFIG_BUCKET="terraform-configs-runner-$(aws sts get-caller-identity --query Account --output text)"
-AWS_REGION="us-east-1"
+AWS_REGION="ap-northeast-2"
 KEY_NAME="your-ssh-key" # Replace with your SSH key name
 
 # Create S3 buckets if they don't exist
@@ -39,7 +36,24 @@ cd ../..
 aws s3 cp example-project.zip s3://$CONFIG_BUCKET/
 
 echo "Deployment complete!"
-echo "To trigger a Terraform run, use:"
+echo ""
+echo "Single-User Cross-Account Terraform Runner is ready!"
+echo "To trigger a Terraform run in the same account:"
 echo "curl -X POST http://$INSTANCE_IP:8080/run-terraform \\"
 echo "     -H \"Content-Type: application/json\" \\"
 echo "     -d '{\"project_name\": \"example-project\", \"command\": \"apply\", \"variables\": {\"vpc_name\": \"custom-vpc\"}}'"
+echo ""
+echo "To provision in a different AWS account, include aws_credentials:"
+echo "curl -X POST http://$INSTANCE_IP:8080/run-terraform \\"
+echo "     -H \"Content-Type: application/json\" \\"
+echo "     -d '{"
+echo "       \"project_name\": \"example-project\","
+echo "       \"command\": \"apply\","
+echo "       \"variables\": {\"vpc_name\": \"custom-vpc\"},"
+echo "       \"aws_credentials\": {"
+echo "         \"access_key\": \"AKIAIOSFODNN7EXAMPLE\","
+echo "         \"secret_key\": \"wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\","
+echo "         \"region\": \"us-west-2\","
+echo "         \"account_id\": \"123456789012\""
+echo "       }"
+echo "     }'"

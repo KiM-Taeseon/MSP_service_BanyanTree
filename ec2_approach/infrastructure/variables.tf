@@ -2,7 +2,7 @@
 variable "aws_region" {
   description = "AWS region for all resources"
   type        = string
-  default     = "ap_northeast-2"
+  default     = "ap-northeast-2"
 }
 
 variable "state_bucket_name" {

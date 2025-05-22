@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Terraform Runner Script
+# Terraform Runner Script - Single User Version with Cross-Account Support
 # Usage: ./run-terraform.sh [project_name] [command] [variables_json] [aws_credentials_json]
 
 set -e
@@ -40,7 +40,7 @@ aws s3 cp "s3://$CONFIG_BUCKET/$PROJECT_NAME.zip" ./project.zip --region "$AWS_R
 unzip -o project.zip
 rm project.zip
 
-# Prepare backend config - still use the runner account for state management
+# Prepare backend config - always use the runner account for state management
 cat > backend.tf <<EOT
 terraform {
   backend "s3" {
