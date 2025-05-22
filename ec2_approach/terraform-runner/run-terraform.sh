@@ -1,11 +1,8 @@
 #!/bin/bash
-
-# Terraform Runner Script - Single User Version with Cross-Account Support
-# Usage: ./run-terraform.sh [project_name] [command] [variables_json] [aws_credentials_json]
+# Enhanced run-terraform.sh with validation
 
 set -e
 
-# Get parameters
 PROJECT_NAME=$1
 COMMAND=$2
 VARIABLES_JSON=$3
@@ -14,38 +11,59 @@ AWS_CREDENTIALS_JSON=$4
 # Load environment variables
 source /etc/environment
 
-# Generate a unique run ID
-RUN_ID=$(date +%s)
+# Validate project exists in S3 before proceeding
+echo "Validating project exists in S3..."
+if ! aws s3 ls "s3://$CONFIG_BUCKET/$PROJECT_NAME.zip" --region "$AWS_REGION" > /dev/null 2>&1; then
+    echo "ERROR: Project '$PROJECT_NAME' not found in S3 bucket $CONFIG_BUCKET"
+    echo "Available projects:"
+    aws s3 ls "s3://$CONFIG_BUCKET/" --region "$AWS_REGION" | grep "\.zip$" | awk '{print $4}' | sed 's/\.zip$//'
+    exit 1
+fi
 
-# Set up logging
+# Generate unique run ID and state key to prevent conflicts
+RUN_ID=$(date +%s)-$(openssl rand -hex 4)
+STATE_KEY="$PROJECT_NAME/$RUN_ID/terraform.tfstate"
+
+# Set up logging with enhanced info
 LOG_FILE="/home/terraform/logs/terraform-$PROJECT_NAME-$RUN_ID.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
-echo "==== Terraform Runner ====="
+echo "==== Terraform Runner (Enhanced) ====="
 echo "Run ID: $RUN_ID"
 echo "Project: $PROJECT_NAME"
 echo "Command: $COMMAND"
-echo "Variables: $VARIABLES_JSON"
-echo "AWS Credentials: $(echo $AWS_CREDENTIALS_JSON | jq 'if .access_key then .access_key = "***" else . end | if .secret_key then .secret_key = "***" else . end | if .session_token then .session_token = "***" else . end')"
-echo "=========================="
+echo "State Key: $STATE_KEY"
+echo "Target Account: $(echo $AWS_CREDENTIALS_JSON | jq -r '.account_id // "default"')"
+echo "======================================="
 
-# Create project directory with unique run ID to ensure isolation
+# Create isolated workspace
 WORK_DIR="/home/terraform/projects/$PROJECT_NAME-$RUN_ID"
 mkdir -p "$WORK_DIR"
 cd "$WORK_DIR"
 
-# Download the project from S3
+# Download with retry logic
 echo "Downloading project from S3..."
-aws s3 cp "s3://$CONFIG_BUCKET/$PROJECT_NAME.zip" ./project.zip --region "$AWS_REGION"
+for i in {1..3}; do
+    if aws s3 cp "s3://$CONFIG_BUCKET/$PROJECT_NAME.zip" ./project.zip --region "$AWS_REGION"; then
+        break
+    elif [ $i -eq 3 ]; then
+        echo "ERROR: Failed to download project after 3 attempts"
+        exit 1
+    else
+        echo "Download attempt $i failed, retrying..."
+        sleep 5
+    fi
+done
+
 unzip -o project.zip
 rm project.zip
 
-# Prepare backend config - always use the runner account for state management
+# Use unique state key to prevent conflicts
 cat > backend.tf <<EOT
 terraform {
   backend "s3" {
     bucket         = "$STATE_BUCKET"
-    key            = "$PROJECT_NAME/terraform.tfstate"
+    key            = "$STATE_KEY"
     region         = "$AWS_REGION"
     dynamodb_table = "$LOCK_TABLE"
     encrypt        = true

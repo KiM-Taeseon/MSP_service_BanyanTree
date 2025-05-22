@@ -10,6 +10,8 @@ PROJECT_NAME=$1
 SPEC_FILE_PATH=$2
 BUILD_ID=$3
 
+$TERRAFORM_PROJECT_DIR="/home/templates/"
+
 # Validate parameters
 if [ -z "$PROJECT_NAME" ] || [ -z "$SPEC_FILE_PATH" ] || [ -z "$BUILD_ID" ]; then
     echo "Usage: $0 <project_name> <spec_file_path> <build_id>"
@@ -78,7 +80,7 @@ fi
 
 # Call the black box script to generate Terraform files
 echo "🔧 Calling Terraform generator script..."
-echo "Command: $GENERATOR_SCRIPT \"$PROJECT_NAME\" \"$SPEC_FILE_PATH\" \"$PROJECT_DIR\""
+echo "Command: $GENERATOR_SCRIPT \"$PROJECT_NAME\" \"$SPEC_FILE_PATH\" \"$PROJECT_DIR\"" \"$TERRAFORM_PROJECT_DIR\""
 echo ""
 
 # Run the generator with timeout
@@ -96,22 +98,6 @@ fi
 echo ""
 echo "✅ Terraform generation completed successfully!"
 echo ""
-
-# Validate that essential Terraform files were created
-echo "🔍 Validating generated Terraform files..."
-REQUIRED_FILES=("main.tf")
-OPTIONAL_FILES=("variables.tf" "outputs.tf" "versions.tf")
-
-for file in "${REQUIRED_FILES[@]}"; do
-    if [ ! -f "$PROJECT_DIR/$file" ]; then
-        echo "❌ ERROR: Required file not found: $file"
-        echo "Generated files:"
-        ls -la "$PROJECT_DIR/"
-        exit 1
-    fi
-done
-
-echo "✅ Required Terraform files validated"
 
 # Show project structure
 echo ""
