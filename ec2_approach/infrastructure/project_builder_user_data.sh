@@ -297,7 +297,7 @@ cat > "$OUTPUT_DIR/variables.tf" <<EOT
 variable "aws_region" {
   description = "AWS region for resources"
   type        = string
-  default     = "us-east-1"
+  default     = "ap-northeast-2"
 }
 
 variable "environment" {

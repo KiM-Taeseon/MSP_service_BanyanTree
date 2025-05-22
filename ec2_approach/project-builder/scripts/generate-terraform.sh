@@ -51,7 +51,7 @@ fi
 # Extract key parameters from JSON spec
 INFRA_TYPE=$(echo "$SPEC_CONTENT" | jq -r '.type // "generic"')
 ENVIRONMENT=$(echo "$SPEC_CONTENT" | jq -r '.environment // "dev"')
-REGION=$(echo "$SPEC_CONTENT" | jq -r '.region // "us-east-1"')
+REGION=$(echo "$SPEC_CONTENT" | jq -r '.region // "ap-northeast-2"')
 
 echo "📊 Parsed specification:"
 echo "  Infrastructure Type: $INFRA_TYPE"
@@ -805,7 +805,7 @@ variable "environment" {
 variable "aws_region" {
   description = "AWS region for resources"
   type        = string
-  default     = "us-east-1"
+  default     = "ap-northeast-2"
 }
 
 # VPC-specific variables
