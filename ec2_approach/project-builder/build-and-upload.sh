@@ -10,7 +10,8 @@ PROJECT_NAME=$1
 SPEC_FILE_PATH=$2
 BUILD_ID=$3
 
-$TERRAFORM_PROJECT_DIR="/home/templates/"
+# Fixed: Remove the $ from the variable assignment
+TERRAFORM_PROJECT_DIR="/home/templates/"
 
 # Validate parameters
 if [ -z "$PROJECT_NAME" ] || [ -z "$SPEC_FILE_PATH" ] || [ -z "$BUILD_ID" ]; then
@@ -80,11 +81,11 @@ fi
 
 # Call the black box script to generate Terraform files
 echo "🔧 Calling Terraform generator script..."
-echo "Command: $GENERATOR_SCRIPT \"$PROJECT_NAME\" \"$SPEC_FILE_PATH\" \"$PROJECT_DIR\"" \"$TERRAFORM_PROJECT_DIR\""
+echo "Command: $GENERATOR_SCRIPT \"$PROJECT_NAME\" \"$SPEC_FILE_PATH\" \"$PROJECT_DIR\" \"$TERRAFORM_PROJECT_DIR\""
 echo ""
 
 # Run the generator with timeout
-timeout 240 "$GENERATOR_SCRIPT" "$PROJECT_NAME" "$SPEC_FILE_PATH" "$PROJECT_DIR"
+timeout 240 "$GENERATOR_SCRIPT" "$PROJECT_NAME" "$SPEC_FILE_PATH" "$PROJECT_DIR" "$TERRAFORM_PROJECT_DIR"
 GENERATOR_EXIT_CODE=$?
 
 if [ $GENERATOR_EXIT_CODE -eq 124 ]; then

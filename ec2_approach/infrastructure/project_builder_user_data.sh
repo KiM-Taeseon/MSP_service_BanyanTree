@@ -154,7 +154,7 @@ PROJECT_NAME=$1
 SPEC_FILE_PATH=$2
 BUILD_ID=$3
 
-$TERRAFORM_PROJECT_DIR="/home/templates/"
+TERRAFORM_PROJECT_DIR="/home/templates/"
 
 # Validate parameters
 if [ -z "$PROJECT_NAME" ] || [ -z "$SPEC_FILE_PATH" ] || [ -z "$BUILD_ID" ]; then
@@ -248,7 +248,7 @@ echo ""
 echo "📦 Generated project structure:"
 echo "==============================="
 find "$PROJECT_DIR" -type f | sort | while read -r file; do
-    rel_path=${file#$PROJECT_DIR/}
+    rel_path=$${file#$PROJECT_DIR/}
     size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "unknown")
     echo "  $rel_path ($size bytes)"
 done
