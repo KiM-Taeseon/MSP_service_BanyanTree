@@ -32,3 +32,5 @@ terraform.rc
 
 # Ignore .terraform.lock.hcl if you want (uncomment the line below)
 .terraform.lock.hcl
+
+tfplan
