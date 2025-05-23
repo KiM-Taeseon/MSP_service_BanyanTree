@@ -8,10 +8,9 @@ yum install -y wget unzip python3 python3-pip git jq util-linux
 
 # Set up environment variables
 cat > /etc/environment <<EOF
-STATE_BUCKET=${state_bucket}
-CONFIG_BUCKET=${config_bucket}
-LOCK_TABLE=${lock_table}
-AWS_REGION=${aws_region}
+STATE_BUCKET=terraform-state-runner-157931043046
+CONFIG_BUCKET=terraform-configs-runner-157931043046 
+AWS_REGION=ap-northeast-2
 EOF
 
 # Create terraform user

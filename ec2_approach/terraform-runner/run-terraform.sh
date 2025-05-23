@@ -63,7 +63,6 @@ terraform {
     bucket         = "$STATE_BUCKET"
     key            = "$STATE_KEY"
     region         = "$AWS_REGION"
-    dynamodb_table = "$LOCK_TABLE"
     encrypt        = true
   }
 }
