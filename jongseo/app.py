@@ -27,21 +27,53 @@ def save_input():
     filename = f"{user_id}_{timestamp}_input_data.json"
 
     # ✅ 경로 1: 현재 디렉토리 (/var/www/html)
-    path1 = os.path.join(os.path.dirname(__file__), filename)
+    path = os.path.join(os.path.dirname(__file__), filename)
+        
+    try:
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2)
+        print(f"✅ 저장됨: {path}")
+    except Exception as e:
+        print(f"❌ 저장 실패 ({path}): {e}")
 
-    # ✅ 경로 2: 추가 저장 경로
-    path2 = os.path.join("/root/workdir/geonho/MSP_Service_BanyanTree/geonho", filename)
+    return jsonify({"message": f"{filename} 저장 완료!"}), 200
 
-    for path in [path1, path2]:
+@app.route("/final", methods=["POST"])
+def save_final_input():
+    data = request.get_json()
+    print("📥 최종 입력값 (2단계):", data)
+
+    # 가장 최신 input_data.json에서 user_name 추출
+    input_files = [f for f in os.listdir('.') if f.endswith('_input_data.json')]
+    input_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+
+    user_name = "anonymous"
+    if input_files:
         try:
-            with open(path, "w") as f:
-                json.dump(data, f, indent=2)
-            print(f"✅ 저장됨: {path}")
+            with open(input_files[0], "r") as f:
+                input_data = json.load(f)
+                user_name = input_files.get("userId", "anonymous")
         except Exception as e:
-            print(f"❌ 저장 실패 ({path}): {e}")
+            print(f"❌ user_name 추출 실패: {e}")
+
+    # user_name을 userinput에 삽입
+    if "userinput" in data:
+        data["userinput"]["user_name"] = user_name
+
+    # 파일명 생성 및 저장
+    kst_time = datetime.utcnow() + timedelta(hours=9)
+    timestamp = kst_time.strftime("%Y%m%d_%H%M%S")
+    filename = f"{user_name}_{timestamp}_final_data.json"
+    path = os.path.join(os.path.dirname(__file__), filename)
+
+    try:
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2)
+        print(f"✅ 최종 저장됨: {path}")
+    except Exception as e:
+        print(f"❌ 최종 저장 실패 ({path}): {e}")
 
     return jsonify({"message": f"{filename} 저장 완료!"}), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
-

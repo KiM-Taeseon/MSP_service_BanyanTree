@@ -8,16 +8,17 @@ document.getElementById("awsForm").addEventListener("submit", async function (ev
     const rds = parseInt(document.getElementById("rds").value);
 
     try {
-        const res = await fetch("http://www.jongseo22.com/aws_price_data.json");
-        if (!res.ok) throw new Error(`HTTP 오류: ${res.status}`);
+        const res = await fetch("https://www.jongseo22.com/aws_price_data.json");
+        if (!res.ok) throw new Error(`HTTPS 오류: ${res.status}`);
 
         const pricing = await res.json();
         const summary = {};
 
         for (const [region, data] of Object.entries(pricing)) {
+            const s3HourlyPerTB = (data.s3 ?? 0) / 730 * 1024;
             const total =
                 (data.ec2?.[ec2type] ?? 0) * ec2 +
-                (data.s3 ?? 0) * s3 +
+                s3HourlyPerTB * s3 +
                 (data.rds ?? 0) * rds;
             summary[region] = parseFloat(total.toFixed(4));
         }
@@ -26,62 +27,93 @@ document.getElementById("awsForm").addEventListener("submit", async function (ev
         const cheapest = sorted[0];
         const top3_region = sorted.slice(0, 3).map(([region]) => region);
 
-        const topRegionsDiv = document.getElementById("topRegions");
-        topRegionsDiv.innerHTML = "<h2>Top 3 저렴한 리전</h2>";
+        const titleWrapper = document.getElementById("topRegionTitleWrapper");
+        titleWrapper.innerHTML = "";
+
+        const title = document.createElement("h2");
+        title.innerText = "Top 3 저렴한 리전";
+        title.style.marginRight = "20px";
+        titleWrapper.appendChild(title);
+
+        const topRegionsDiv = document.createElement("div");
+        topRegionsDiv.id = "topRegions";
+        topRegionsDiv.style.display = "flex";
+        topRegionsDiv.style.gap = "10px";
+
+        const diagramWrapper = document.getElementById("diagramWrapper");
 
         sorted.slice(0, 3).forEach(([region, price]) => {
             const div = document.createElement("div");
             div.className = "region-item";
             div.innerText = `${region} ($${price})`;
-            div.dataset.region = region;
 
-            // 마우스 올릴 때 이미지 표시
+            // 마우스 오버시 이미지 표시
             div.addEventListener("mouseenter", () => {
-                const oldImg = document.getElementById("diagramImage");
-                if (oldImg) oldImg.remove();
+                diagramWrapper.innerHTML = "";
 
                 const img = document.createElement("img");
-                img.id = "diagramImage";
                 img.src = `/diagrams/${region}.png?t=${Date.now()}`;
-                img.alt = "Architecture Diagram";
-                img.style.position = "absolute";
-                img.style.bottom = "20px";
-                img.style.right = "20px";
-                img.style.width = "50%";
-                img.style.maxHeight = "60%";
-                img.style.objectFit = "contain";
-                img.style.border = "1px solid #ccc";
-                img.style.padding = "8px";
-                img.style.background = "#fff";
-                document.querySelector(".right-pane").appendChild(img);
+                img.alt = `${region} 아키텍처 다이어그램`;
+                img.className = "centered-image";
+
+                diagramWrapper.appendChild(img);
             });
 
             div.addEventListener("mouseleave", () => {
-                const img = document.getElementById("diagramImage");
-                if (img) img.remove();
+                diagramWrapper.innerHTML = "";
             });
 
-            // ✅ 클릭 시 region 정보만 next.html로 전달
+            // 클릭 시 next.html 이동
             div.addEventListener("click", () => {
-                const query = new URLSearchParams({
-                    region
-                }).toString();
-                window.location.href = `/next.html?${query}`;
+                const query = new URLSearchParams();
+		if (region) query.append("region", region);    
+                if (userId) query.append("userId", userId);
+                if (region) query.append("region", region);
+                if (ec2) query.append("ec2", ec2);
+                if (ec2type) query.append("ec2type", ec2type);
+                if (s3) query.append("s3", s3);
+                if (rds) query.append("rds", rds);
+
+                window.location.href = `/next.html?${query.toString()}`;
             });
 
             topRegionsDiv.appendChild(div);
         });
 
-        // 결과 테이블 출력
-        let resultHTML = `<h2>최저가 리전: ${cheapest[0]} ($${cheapest[1]})</h2>`;
-        resultHTML += `<table><thead><tr><th>리전</th><th>총 비용 ($)</th></tr></thead><tbody>`;
+        titleWrapper.appendChild(topRegionsDiv);
+
+        let resultHTML = `<h2>최저가 리전: ${cheapest[0]} ($${cheapest[1]}/h)</h2>`;
+        resultHTML += `<table>
+        <thead>
+          <tr>
+            <th>리전</th>
+            <th>EC2<br>(${ec2type}/시간)</th>
+            <th>RDS<br>(t3.micro/시간)</th>
+            <th>S3<br>(1TB/시간)</th>
+            <th>총 비용<br>(시간)</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
         for (const [region, price] of Object.entries(summary)) {
-            resultHTML += `<tr><td>${region}</td><td>$${price}</td></tr>`;
+            const ec2Unit = pricing[region].ec2?.[ec2type] ?? 0;
+            const rdsUnit = pricing[region].rds ?? 0;
+            const s3TBPerHour = (pricing[region].s3 ?? 0) / 730 * 1024;
+
+            const highlight = top3_region.includes(region) ? 'highlight-row' : '';
+
+            resultHTML += `<tr class="${highlight}">
+              <td>${region}</td>
+              <td>$${ec2Unit.toFixed(5)}</td>
+              <td>$${rdsUnit.toFixed(5)}</td>
+              <td>$${s3TBPerHour.toFixed(5)}</td>
+              <td>$${price.toFixed(4)}</td>
+            </tr>`;
         }
+
         resultHTML += '</tbody></table>';
         document.getElementById("output").innerHTML = resultHTML;
 
-        // 백엔드 저장 요청 (선택 전까지만)
         await fetch("/save", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -89,7 +121,7 @@ document.getElementById("awsForm").addEventListener("submit", async function (ev
         });
 
     } catch (error) {
-        document.getElementById("output").innerHTML = `<p style="color:red">❗ 오류: ${error.message}</p>`;
+        document.getElementById("output").innerHTML = `<p style=\"color:red\">❗ 오류: ${error.message}</p>`;
     }
 });
 

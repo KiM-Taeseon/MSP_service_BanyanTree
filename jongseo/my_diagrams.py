@@ -67,6 +67,7 @@ def create_diagram(region, az_list, ec2, s3, rds):
         f"{region} Multi-AZ Architecture",
         filename=str(output_path.with_suffix("")),
         show=False,
+        direction="TB",
         graph_attr={"nodesep": "1.0", "ranksep": "5", "splines": "ortho"}
     ):
         internet_gateway = InternetGateway("Internet Gateway")

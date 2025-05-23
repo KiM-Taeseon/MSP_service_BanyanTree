@@ -53,15 +53,16 @@ button:hover {
     width: 60%;
     padding: 20px;
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 /* 상위 3개 리전 버튼 영역 */
-#topRegions {
+#topRegionTitleWrapper {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    font-size: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
 /* 리전 버튼 스타일 */
@@ -69,34 +70,72 @@ button:hover {
     background-color: #f8f9fa;
     border: 1px solid #ccc;
     border-radius: 8px;
-    padding: 12px;
+    padding: 12px 18px;
     text-align: center;
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.2s ease;
+    position: relative;
+    z-index: 1;
 }
 
 .region-item:hover {
     background-color: #e2e6ea;
-    transform: scale(1.02);
+    transform: scale(1.05);
 }
 
-/* 리전 다이어그램 이미지 */
-#diagramImage {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 90%;
-    max-height: 80%;
-    object-fit: contain;
-    border: 1px solid #ccc;
-    padding: 10px;
-    background: #fff;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* 출력 결과 */
+/* 출력 테이블 */
 #output {
     margin-top: 30px;
 }
 
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background-color: white;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+}
+
+th {
+    background-color: #f0f4f8;
+    color: #333;
+    font-weight: bold;
+}
+
+tr:nth-child(even) {
+    background-color: #f9fcff;
+}
+
+tr:hover {
+    background-color: #eef6ff;
+}
+
+.highlight-row {
+    background-color: #fff7d6 !important;
+    font-weight: bold;
+}
+
+/* 다이어그램 이미지*/
+.centered-image {
+    max-width: 80%;
+    max-height: 80vh;       /* ← 화면 높이 기준 제한 추가 */
+    height: auto;
+    border: 1px solid #ccc;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#diagramWrapper {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}

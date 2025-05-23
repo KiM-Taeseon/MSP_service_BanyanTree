@@ -1,0 +1,46 @@
+최신 입력 파일: /var/www/html/jongseo_20250522_174006_input_data.json
+
+[DEBUG] 입력 JSON 내용:
+{
+  "userId": "jongseo",
+  "ec2": 3,
+  "ec2type": "t2.micro",
+  "s3": 2,
+  "rds": 2,
+  "top3_region": [
+    "ap-south-1",
+    "ap-southeast-1",
+    "us-west-2"
+  ]
+}
+Traceback (most recent call last):
+  File "/var/www/html/my_diagrams.py", line 124, in <module>
+    create_diagram(region, az_list, ec2_count, s3_count, rds_count)
+  File "/var/www/html/my_diagrams.py", line 66, in create_diagram
+    with Diagram(
+  File "/usr/local/lib/python3.10/dist-packages/diagrams/__init__.py", line 167, in __exit__
+    os.remove(self.filename)
+FileNotFoundError: [Errno 2] No such file or directory: '/var/www/html/diagrams/ap-south-1'
+최신 입력 파일: /var/www/html/dlrjsgh_20250522_175155_input_data.json
+
+[DEBUG] 입력 JSON 내용:
+{
+  "userId": "dlrjsgh",
+  "ec2": 2,
+  "ec2type": "t2.micro",
+  "s3": 1,
+  "rds": 1,
+  "top3_region": [
+    "ap-south-1",
+    "ap-southeast-1",
+    "us-west-2"
+  ]
+}
+Traceback (most recent call last):
+  File "/var/www/html/my_diagrams.py", line 124, in <module>
+    create_diagram(region, az_list, ec2_count, s3_count, rds_count)
+  File "/var/www/html/my_diagrams.py", line 66, in create_diagram
+    with Diagram(
+  File "/usr/local/lib/python3.10/dist-packages/diagrams/__init__.py", line 167, in __exit__
+    os.remove(self.filename)
+FileNotFoundError: [Errno 2] No such file or directory: '/var/www/html/diagrams/ap-south-1'

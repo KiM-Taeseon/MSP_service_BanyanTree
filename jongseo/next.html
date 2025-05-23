@@ -16,7 +16,7 @@
             height: 100vh;
         }
 
-        .side-info, .form-container, .diagram-pane {
+        .side-info, .db-info, .diagram-pane {
             padding: 30px;
         }
 
@@ -26,17 +26,14 @@
             border-right: 1px solid #ddd;
         }
 
-        .form-container {
-            width: 40%;
-            background: #fff;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        .db-info {
+            width: 25%;
+            background: #ffffff;
+            border-right: 1px solid #ddd;
         }
 
         .diagram-pane {
-            width: 35%;
+            width: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -88,8 +85,8 @@
         }
 
         .diagram-pane img {
-            max-width: 90%;
-            max-height: 90%;
+            max-width: 98%;
+            max-height: 98%;
             border: 2px solid #ccc;
             border-radius: 8px;
             background: #fff;
@@ -107,11 +104,19 @@
     <div class="info-box" id="typeBox">타입: -</div>
     <div class="info-box" id="s3Box">S3: -</div>
     <div class="info-box" id="rdsBox">RDS: -</div>
+
+    <h2>🗄️  DB 정보 </h2>
+    <label for="dbName">Database 이름</label>
+    <input type="text" id="dbName" placeholder="예: MyDatabase">
+
+    <label for="dbPassword">Database 비밀번호</label>
+    <input type="text" id="dbPassword" placeholder="예: test123">
 </div>
 
-<!-- 중앙: 입력 폼 -->
-<div class="form-container">
-    <h2>GitHub 및 Access Key 입력</h2>
+<div class="db-info" id="inputInformation">
+    <h2>🛠️  프로젝트 정보 </h2>
+    <label for="projectName">프로젝트 이름</label>
+    <input type="text" id="projectName" placeholder="Myproject">
 
     <label for="githubUrl">GitHub 주소</label>
     <input type="url" id="githubUrl" placeholder="https://github.com/your/repo">
@@ -119,18 +124,25 @@
     <label for="accessKey">AWS Access Key</label>
     <input type="text" id="accessKey" placeholder="예: AKIA...">
 
-    <button id="submitConfig">생성 시작</button>
+    <label for="secretKey">AWS Secret Key</label>
+    <input type="text" id="secretKey" placeholder="예: wJalrXUtnF...">
+
+    <label for="sessionToken">AWS Session Token</label>
+    <input type="text" id="sessionToken" placeholder="임시 인증 토큰">
+
+    <button id="submitConfig" style="margin-top: 70px;">배포 시작</button>
 </div>
 
 <!-- 우측: 리전 아키텍처 이미지 -->
 <div class="diagram-pane">
-    <img id="diagramImage" alt="아키텍처 이미지">
+        <img id="diagramImage" alt="" src="/diagrams/${region}.png">
 </div>
-
 <script>
     const params = new URLSearchParams(window.location.search);
 
-    const region = params.get("selectedRegion");
+    const reiong = params.get("region");	
+    const userId = params.get("userId");
+    const region = params.get("region");
     const ec2 = params.get("ec2");
     const ec2type = params.get("ec2type");
     const s3 = params.get("s3");
@@ -147,36 +159,70 @@
     if (region) {
         img.src = `/diagrams/${region}.png`;
         img.alt = `${region} 아키텍처 다이어그램`;
+        img.style.display = "block";
     } else {
         img.style.display = "none";
     }
 
     document.getElementById("submitConfig").addEventListener("click", async () => {
+        const projectName = document.getElementById("projectName").value.trim();
         const githubUrl = document.getElementById("githubUrl").value.trim();
         const accessKey = document.getElementById("accessKey").value.trim();
+        const secretKey = document.getElementById("secretKey").value.trim();
+        const sessionToken = document.getElementById("sessionToken").value.trim();
+        const dbName = document.getElementById("dbName").value.trim();
+        const dbPassword = document.getElementById("dbPassword").value.trim();
 
-        if (!githubUrl || !accessKey || !region) {
+        // 유효성 검사 추가
+        if (dbName.includes("_")) {
+            alert("❌ Database 이름에 밑줄(_)을 사용할 수 없습니다.");
+            return;
+        }
+
+        if (dbPassword.length < 8) {
+            alert("❌ Database 비밀번호는 8자 이상이어야 합니다.");
+            return;
+        }
+
+        if (!projectName || !githubUrl || !accessKey || !secretKey || !sessionToken || !dbName || !dbPassword || !region || !ec2 || !s3 || !rds) {
             alert("모든 항목을 입력하세요.");
             return;
         }
 
+        const payload = {
+            project_name: projectName,
+            infrastructure_spec: {
+                user_name: userId,
+		region: region, 
+                project_link: githubUrl,
+                access_key: accessKey,
+                secret_key: secretKey,
+                session_token: sessionToken,
+                instance_count: parseInt(ec2),
+                db_identifier: `${projectName}db`,
+                db_count: parseInt(rds),
+                db_username: dbName,
+                db_password: dbPassword,
+                bucket_count: parseInt(s3)
+            }
+        };
+
         try {
-            await fetch("/save", {
+            const res = await fetch("/final", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    selectedRegion: region,
-                    githubUrl,
-                    accessKey
-                })
+                body: JSON.stringify(payload)
             });
-            alert("인프라 생성 중입니다.");
+
+            if (res.ok) {
+                alert("✅ 인프라 생성 요청 및 최종 저장이 완료되었습니다.");
+            } else {
+                throw new Error(`요청 실패: ${res.status}`);
+            }
         } catch (err) {
-            alert("생성 실패: " + err.message);
+            alert("❌ 요청 실패: " + err.message);
         }
     });
 </script>
-
 </body>
 </html>
-
