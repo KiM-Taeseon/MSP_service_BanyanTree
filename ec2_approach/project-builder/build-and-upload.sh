@@ -10,8 +10,8 @@ PROJECT_NAME=$1
 SPEC_FILE_PATH=$2
 BUILD_ID=$3
 
-# Fixed: Remove the $ from the variable assignment
-TERRAFORM_PROJECT_DIR="/home/templates/"
+# Fixed: Correct path to terraform templates directory
+TERRAFORM_PROJECT_DIR="/home/templates"
 
 # Validate parameters
 if [ -z "$PROJECT_NAME" ] || [ -z "$SPEC_FILE_PATH" ] || [ -z "$BUILD_ID" ]; then
@@ -33,6 +33,7 @@ echo "=================================="
 echo "Build ID: $BUILD_ID"
 echo "Project Name: $PROJECT_NAME"
 echo "Spec File: $SPEC_FILE_PATH"
+echo "Templates Directory: $TERRAFORM_PROJECT_DIR"
 echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 echo "Host: $(hostname)"
 echo "User: $(whoami)"
@@ -42,6 +43,12 @@ echo "=================================="
 # Validate spec file exists
 if [ ! -f "$SPEC_FILE_PATH" ]; then
     echo "❌ ERROR: Infrastructure specification file not found: $SPEC_FILE_PATH"
+    exit 1
+fi
+
+# Validate terraform templates directory exists
+if [ ! -d "$TERRAFORM_PROJECT_DIR" ]; then
+    echo "❌ ERROR: Terraform templates directory not found: $TERRAFORM_PROJECT_DIR"
     exit 1
 fi
 
