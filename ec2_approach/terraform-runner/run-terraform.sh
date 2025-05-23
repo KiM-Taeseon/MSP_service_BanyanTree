@@ -1,12 +1,11 @@
 #!/bin/bash
-# Enhanced run-terraform.sh with validation
+# Enhanced run-terraform.sh with AWS credentials removed
 
 set -e
 
 PROJECT_NAME=$1
 COMMAND=$2
 VARIABLES_JSON=$3
-AWS_CREDENTIALS_JSON=$4
 
 # Load environment variables
 source /etc/environment
@@ -33,7 +32,6 @@ echo "Run ID: $RUN_ID"
 echo "Project: $PROJECT_NAME"
 echo "Command: $COMMAND"
 echo "State Key: $STATE_KEY"
-echo "Target Account: $(echo $AWS_CREDENTIALS_JSON | jq -r '.account_id // "default"')"
 echo "======================================="
 
 # Create isolated workspace
@@ -70,63 +68,6 @@ terraform {
   }
 }
 EOT
-
-# Set up AWS provider configuration with credentials if provided
-if [ -n "$AWS_CREDENTIALS_JSON" ] && [ "$AWS_CREDENTIALS_JSON" != "{}" ]; then
-    echo "Configuring AWS provider with supplied credentials..."
-    
-    # Parse credentials from JSON
-    ACCESS_KEY=$(echo $AWS_CREDENTIALS_JSON | jq -r '.access_key // empty')
-    SECRET_KEY=$(echo $AWS_CREDENTIALS_JSON | jq -r '.secret_key // empty')
-    SESSION_TOKEN=$(echo $AWS_CREDENTIALS_JSON | jq -r '.session_token // empty')
-    REGION=$(echo $AWS_CREDENTIALS_JSON | jq -r '.region // empty')
-    ACCOUNT_ID=$(echo $AWS_CREDENTIALS_JSON | jq -r '.account_id // empty')
-    
-    # If no region provided, use the default
-    if [ -z "$REGION" ]; then
-        REGION="$AWS_REGION"
-    fi
-    
-    # Create or modify provider configuration
-    if grep -q "provider \"aws\"" *.tf 2>/dev/null; then
-        echo "AWS provider found in configuration, creating override..."
-        cat > provider_override.tf <<EOT
-provider "aws" {
-  region     = "$REGION"
-  access_key = "$ACCESS_KEY"
-  secret_key = "$SECRET_KEY"
-$([ -n "$SESSION_TOKEN" ] && echo "  token      = \"$SESSION_TOKEN\"")
-}
-EOT
-    else
-        echo "Creating AWS provider configuration..."
-        cat > provider.tf <<EOT
-provider "aws" {
-  region     = "$REGION"
-  access_key = "$ACCESS_KEY"
-  secret_key = "$SECRET_KEY"
-$([ -n "$SESSION_TOKEN" ] && echo "  token      = \"$SESSION_TOKEN\"")
-}
-EOT
-    fi
-    
-    # Add account info to the logs
-    if [ -n "$ACCOUNT_ID" ]; then
-        echo "Target AWS Account: $ACCOUNT_ID in $REGION"
-    else
-        echo "Target AWS Region: $REGION (account ID not provided)"
-    fi
-else
-    echo "Using default AWS credentials from instance profile"
-    if ! grep -q "provider \"aws\"" *.tf 2>/dev/null; then
-        echo "Creating default AWS provider configuration..."
-        cat > provider.tf <<EOT
-provider "aws" {
-  region = "$AWS_REGION"
-}
-EOT
-    fi
-fi
 
 # Initialize Terraform
 echo "Initializing Terraform..."
