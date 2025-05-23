@@ -1,5 +1,5 @@
 locals {
-  vpc_name         = var.id
+  vpc_name         = var.user_name
   cidr             = var.vpc_cidr
   az               = split(",", var.availability_zones[var.region])
   count            = length(local.az)
@@ -7,7 +7,7 @@ locals {
   private_subnets  = [for i in range(local.count) : cidrsubnet(local.cidr, 8, i + 100)]
 
   used_azs = distinct([
-    for i in range(var.ec2) :
+    for i in range(var.instance_count) :
     local.az[i % length(local.az)]
   ])
 
