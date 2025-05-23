@@ -1,38 +1,68 @@
 [Unit]
-Description=Project Builder Webhook Server
-After=network.target
+Description=Terraform Runner Webhook Server
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-User=projectbuilder
-Group=projectbuilder
-WorkingDirectory=/home/projectbuilder
-ExecStart=/usr/bin/python3 /opt/project-builder/webhook-server.py
+User=terraform
+Group=terraform
+WorkingDirectory=/home/terraform
+
+# Main service command
+ExecStart=/usr/bin/python3 /opt/terraform-runner/webhook-server.py
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Restart configuration
 Restart=always
 RestartSec=10
+StartLimitBurst=5
 
 # Environment variables
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
-EnvironmentFile=/etc/environment
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/opt/terraform-runner
+EnvironmentFile=-/etc/environment
+EnvironmentFile=-/etc/terraform-runner/environment
 
 # Security settings
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/home/projectbuilder /tmp
+ReadWritePaths=/home/terraform /tmp /var/log
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
+MemoryDenyWriteExecute=false
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ProtectHostname=true
 
 # Resource limits
 LimitNOFILE=65536
 LimitNPROC=4096
+LimitCORE=0
+MemoryMax=2G
+CPUQuota=200%
 
 # Logging
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=project-builder-webhook
+SyslogIdentifier=terraform-webhook
+SyslogLevel=info
+
+# Health check
+WatchdogSec=300
+NotifyAccess=all
+
+# Cleanup
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+FinalKillSignal=SIGKILL
 
 [Install]
 WantedBy=multi-user.target
