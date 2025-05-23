@@ -5,7 +5,6 @@ set -e
 
 PROJECT_NAME=$1
 COMMAND=$2
-VARIABLES_JSON=$3
 
 # Load environment variables
 source /etc/environment
@@ -71,12 +70,6 @@ EOT
 # Initialize Terraform
 echo "Initializing Terraform..."
 terraform init
-
-# Create terraform.tfvars.json if variables provided
-if [ ! -z "$VARIABLES_JSON" ]; then
-  echo "Creating variables file..."
-  echo "$VARIABLES_JSON" > terraform.tfvars.json
-fi
 
 # Run the requested command
 echo "Running Terraform $COMMAND..."

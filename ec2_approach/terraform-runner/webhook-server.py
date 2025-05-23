@@ -24,21 +24,18 @@ class TerraformRequestHandler(http.server.SimpleHTTPRequestHandler):
                 # Extract parameters
                 project_name = request.get('project_name')
                 command = request.get('command', 'plan')
-                variables = request.get('variables', {})
                 
                 if not project_name:
                     self.send_error(400, "Missing project_name parameter")
                     return
                 
-                # Convert variables to JSON string
-                variables_json = json.dumps(variables)
                 
                 # Generate a unique run ID for the logs
                 run_id = str(int(time.time()))
                 
                 # Run terraform in a separate thread
                 threading.Thread(target=self.run_terraform, 
-                                 args=(project_name, command, variables_json, run_id)).start()
+                                 args=(project_name, command)).start()
                 
                 # Send response
                 self.send_response(202)
@@ -59,13 +56,12 @@ class TerraformRequestHandler(http.server.SimpleHTTPRequestHandler):
         else:
             self.send_error(404, "Not found")
     
-    def run_terraform(self, project_name, command, variables_json, run_id):
+    def run_terraform(self, project_name, command):
         try:
             subprocess.run([
                 '/opt/terraform-runner/run-terraform.sh',
                 project_name,
                 command,
-                variables_json
             ], check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error running Terraform: {e}", file=sys.stderr)
