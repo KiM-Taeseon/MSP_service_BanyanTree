@@ -1,5 +1,5 @@
 #!/bin/bash
-# Enhanced deploy.sh with validation
+# Fixed deploy.sh - Let Terraform manage all resources
 
 set -e
 
@@ -7,6 +7,18 @@ set -e
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 AWS_REGION="ap-northeast-2"
 KEY_NAME="banyan_key"
+
+# Variables
+STATE_BUCKET="terraform-state-runner-$ACCOUNT_ID"
+CONFIG_BUCKET="terraform-configs-runner-$ACCOUNT_ID"
+
+echo "🚀 Deploying Terraform Runner + Project Builder Infrastructure"
+echo "============================================================"
+echo "Account ID: $ACCOUNT_ID"
+echo "Region: $AWS_REGION"
+echo "State Bucket: $STATE_BUCKET"
+echo "Config Bucket: $CONFIG_BUCKET"
+echo ""
 
 # Validate prerequisites
 echo "🔍 Validating prerequisites..."
@@ -24,62 +36,19 @@ if ! aws ec2 describe-key-pairs --key-names "$KEY_NAME" --region "$AWS_REGION" >
     exit 1
 fi
 
-# Check if we have the necessary permissions
-echo "🔐 Checking AWS permissions..."
-required_actions=(
-    "ec2:DescribeInstances"
-    "iam:CreateRole"
-    "s3:CreateBucket"
-    "dynamodb:CreateTable"
-)
-
-# Variables
-STATE_BUCKET="terraform-state-runner-$ACCOUNT_ID"
-CONFIG_BUCKET="terraform-configs-runner-$ACCOUNT_ID"
-
-echo "🚀 Deploying Terraform Runner + Project Builder Infrastructure"
-echo "============================================================"
-echo "Account ID: $ACCOUNT_ID"
-echo "Region: $AWS_REGION"
-echo "State Bucket: $STATE_BUCKET"
-echo "Config Bucket: $CONFIG_BUCKET"
-echo ""
-
-# Create S3 buckets with proper error handling
-echo "📦 Creating S3 buckets..."
-if ! aws s3 mb s3://$STATE_BUCKET --region $AWS_REGION 2>/dev/null; then
-    if aws s3 ls s3://$STATE_BUCKET 2>/dev/null; then
-        echo "✅ State bucket already exists"
-    else
-        echo "❌ Failed to create state bucket"
-        exit 1
-    fi
-else
-    echo "✅ Created state bucket"
-fi
-
-if ! aws s3 mb s3://$CONFIG_BUCKET --region $AWS_REGION 2>/dev/null; then
-    if aws s3 ls s3://$CONFIG_BUCKET 2>/dev/null; then
-        echo "✅ Config bucket already exists"
-    else
-        echo "❌ Failed to create config bucket"
-        exit 1
-    fi
-else
-    echo "✅ Created config bucket"
-fi
-
-# Deploy infrastructure with validation
-echo "🏗️  Deploying infrastructure..."
+# Deploy infrastructure with Terraform (no manual S3 creation)
+echo "🏗️  Deploying infrastructure with Terraform..."
 cd infrastructure
 
 # Initialize Terraform
+echo "📋 Initializing Terraform..."
 if ! terraform init; then
     echo "❌ Terraform initialization failed"
     exit 1
 fi
 
 # Validate configuration
+echo "🔍 Validating Terraform configuration..."
 if ! terraform validate; then
     echo "❌ Terraform configuration validation failed"
     exit 1
@@ -124,3 +93,9 @@ echo ""
 echo "⏳ Services are starting up (may take 2-3 minutes)..."
 echo "Check status with:"
 echo "  curl http://$PROJECT_BUILDER_IP:8081/health"
+echo ""
+echo "📋 Resources created:"
+echo "   State Bucket: $STATE_BUCKET"
+echo "   Config Bucket: $CONFIG_BUCKET"
+echo "   Terraform Runner IP: $TERRAFORM_RUNNER_IP"
+echo "   Project Builder IP: $PROJECT_BUILDER_IP"
