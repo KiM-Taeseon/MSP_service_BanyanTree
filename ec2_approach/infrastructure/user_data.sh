@@ -4,7 +4,7 @@
 yum update -y
 
 # Install required packages
-yum install -y wget unzip python3 python3-pip git jq util-linux
+yum install -y wget unzip python3 python3-pip git jq util-linux yum-utils
 
 # Set up environment variables
 cat > /etc/environment <<EOF
@@ -21,11 +21,14 @@ mkdir -p /home/terraform/logs
 chown -R terraform:terraform /home/terraform
 
 # Install Terraform
-TERRAFORM_VERSION="1.6.6"
-wget https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_$TERRAFORM_VERSION_linux_amd64.zip
-unzip terraform_$TERRAFORM_VERSION_linux_amd64.zip
-mv terraform /usr/local/bin/
-rm terraform_$TERRAFORM_VERSION_linux_amd64.zip
+# TERRAFORM_VERSION="1.6.6"
+# wget https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_$TERRAFORM_VERSION_linux_amd64.zip
+# unzip terraform_$TERRAFORM_VERSION_linux_amd64.zip
+# mv terraform /usr/local/bin/
+# rm terraform_$TERRAFORM_VERSION_linux_amd64.zip
+
+sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+sudo yum -y install terraform
 
 # Install AWS CLI
 pip3 install awscli --upgrade
