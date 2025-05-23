@@ -82,13 +82,13 @@ fi
 echo "Running Terraform $COMMAND..."
 case "$COMMAND" in
   "plan")
-    terraform plan -out=tfplan
+    terraform plan -out=tfplan -var-file="uservar.tfvars.json"
     ;;
   "apply")
-    terraform apply -auto-approve
+    terraform apply -auto-approve -var-file="uservar.tfvars.json"
     ;;
   "destroy")
-    terraform destroy -auto-approve
+    terraform destroy -auto-approve -var-file="uservar.tfvars.json"
     ;;
   "output")
     terraform output -json

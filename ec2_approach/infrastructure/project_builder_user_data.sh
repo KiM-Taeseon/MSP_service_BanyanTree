@@ -17,8 +17,8 @@ rm terraform_$TERRAFORM_VERSION_linux_amd64.zip
 
 # Set up environment variables
 cat > /etc/environment <<EOF
-CONFIG_BUCKET=${config_bucket}
-AWS_REGION=${aws_region}
+CONFIG_BUCKET=terraform-configs-runner-157931043046 
+AWS_REGION=ap-northeast-2
 EOF
 
 # Create project-builder user
