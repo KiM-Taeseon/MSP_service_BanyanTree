@@ -1,6 +1,7 @@
 locals {
-  ami_instance_type = var.ec2type
-  git_repo_link = var.user_git
+  ami_instance_type = var.instance_type
+  git_repo_link = var.project_link
+  ami_name = var.user_name
 }
 
 data "aws_ami" "amzn2" {
@@ -21,9 +22,9 @@ data "aws_ami" "amzn2" {
 resource "aws_instance" "instance_for_ami" {
   ami           = data.aws_ami.amzn2.id
   instance_type = local.ami_instance_type
-  vpc_security_group_ids = [ aws_security_group.instance-sg.id ]
+  vpc_security_group_ids = [ aws_security_group.bastion-sg.id ]
   subnet_id = aws_subnet.public_subnets[0].id
-  key_name = aws_key_pair.deployer.key_name
+  key_name = aws_key_pair.aws-public-key.key_name
 
   tags = {
     Name = "ami-instance"
@@ -45,7 +46,7 @@ resource "null_resource" "wait_for_web" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = file("/root/AWS-CS9/project/4aws-ami-test/keys/hello.pem")
+      private_key = tls_private_key.private_key.private_key_pem
       host        = aws_instance.instance_for_ami.public_ip
     }
 
@@ -56,7 +57,7 @@ resource "null_resource" "wait_for_web" {
 }
 
 resource "aws_ami_from_instance" "ami" {
-  name               = "test-ami"
+  name               = "${local.ami_name}-ami"
   source_instance_id = aws_instance.instance_for_ami.id
 
   depends_on = [ null_resource.wait_for_web ]
@@ -67,7 +68,7 @@ resource "null_resource" "stop_instance" {
 
   provisioner "local-exec" {
     command = <<EOT
-      aws ec2 stop-instances --instance-ids ${aws_instance.instance_for_ami.id} --region ${var.region}
+      AWS_ACCESS_KEY_ID=${var.access_key} AWS_SECRET_ACCESS_KEY=${var.secret_key} AWS_SESSION_TOKEN=${var.session_token} aws ec2 stop-instances --instance-ids ${aws_instance.instance_for_ami.id} --region ${var.region}
     EOT
   }
 }
