@@ -1,4 +1,3 @@
-### infrastructure/user_data.sh
 #!/bin/bash
 
 # Update system
@@ -35,14 +34,11 @@ pip3 install awscli --upgrade
 # Create runner script directory
 mkdir -p /opt/terraform-runner
 
-# Copy all the files from S3 (in production, you would upload these files to S3 first)
-# For now, we'll create them directly
-
-# Create the run-terraform.sh script
+# Create the run-terraform.sh script (single user with cross-account support)
 cat > /opt/terraform-runner/run-terraform.sh <<'EOF'
 #!/bin/bash
 
-# Terraform Runner Script
+# Terraform Runner Script - Single User Version with Cross-Account Support
 # Usage: ./run-terraform.sh [project_name] [command] [variables_json] [aws_credentials_json]
 
 set -e
@@ -82,7 +78,7 @@ aws s3 cp "s3://$CONFIG_BUCKET/$PROJECT_NAME.zip" ./project.zip --region "$AWS_R
 unzip -o project.zip
 rm project.zip
 
-# Prepare backend config - still use the runner account for state management
+# Prepare backend config - always use the runner account for state management
 cat > backend.tf <<EOT
 terraform {
   backend "s3" {
@@ -195,7 +191,7 @@ EOF
 
 chmod +x /opt/terraform-runner/run-terraform.sh
 
-# Create the webhook server script
+# Create the simplified webhook server script
 cat > /opt/terraform-runner/webhook-server.py <<'EOF'
 #!/usr/bin/env python3
 
@@ -225,6 +221,9 @@ class TerraformRequestHandler(http.server.SimpleHTTPRequestHandler):
                 command = request.get('command', 'plan')
                 variables = request.get('variables', {})
                 
+                # Extract AWS credentials if provided
+                aws_credentials = request.get('aws_credentials', {})
+                
                 if not project_name:
                     self.send_error(400, "Missing project_name parameter")
                     return
@@ -232,9 +231,15 @@ class TerraformRequestHandler(http.server.SimpleHTTPRequestHandler):
                 # Convert variables to JSON string
                 variables_json = json.dumps(variables)
                 
+                # Convert AWS credentials to JSON string
+                aws_credentials_json = json.dumps(aws_credentials)
+                
+                # Generate a unique run ID for the logs
+                run_id = str(int(time.time()))
+                
                 # Run terraform in a separate thread
                 threading.Thread(target=self.run_terraform, 
-                                 args=(project_name, command, variables_json)).start()
+                                 args=(project_name, command, variables_json, aws_credentials_json, run_id)).start()
                 
                 # Send response
                 self.send_response(202)
@@ -243,7 +248,9 @@ class TerraformRequestHandler(http.server.SimpleHTTPRequestHandler):
                 response = {
                     'status': 'accepted',
                     'message': f'Terraform {command} for {project_name} started',
-                    'log_file': f'/home/terraform/logs/terraform-{project_name}-*.log'
+                    'run_id': run_id,
+                    'log_file': f'/home/terraform/logs/terraform-{project_name}-{run_id}.log',
+                    'target_account': aws_credentials.get('account_id', 'default')
                 }
                 self.wfile.write(json.dumps(response).encode())
                 
@@ -254,13 +261,14 @@ class TerraformRequestHandler(http.server.SimpleHTTPRequestHandler):
         else:
             self.send_error(404, "Not found")
     
-    def run_terraform(self, project_name, command, variables_json):
+    def run_terraform(self, project_name, command, variables_json, aws_credentials_json, run_id):
         try:
             subprocess.run([
                 '/opt/terraform-runner/run-terraform.sh',
                 project_name,
                 command,
-                variables_json
+                variables_json,
+                aws_credentials_json
             ], check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error running Terraform: {e}", file=sys.stderr)
